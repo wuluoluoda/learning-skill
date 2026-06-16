@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning"
+  short_description: "Toggle project learning mode"
+  default_prompt: "Use $learning to toggle this project's lightweight supplemental teaching mode."
