@@ -27,6 +27,13 @@ NOTES_TEMPLATE = """# Learning Notes
 - 默认使用阶段边界教学：只在自然节点简短解释关键判断。
 """
 
+OMISSIONS_TEMPLATE = """# Learning Omissions
+
+这些条目是可能值得写入 NOTES.md、但暂时不够明确、不够稳定或不是教学偏好的候选项。它们只是审计线索，不是正式教学偏好。
+
+## 候选项
+"""
+
 
 def emit(payload: dict[str, Any], code: int = 0) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
@@ -58,6 +65,7 @@ def learning_paths(project: Path) -> dict[str, Path]:
         "learning_dir": learning_dir,
         "state_file": learning_dir / "state.json",
         "notes_file": learning_dir / "NOTES.md",
+        "omissions_file": learning_dir / "OMISSIONS.md",
         "agents_file": project / "AGENTS.md",
         "gitignore_file": project / ".gitignore",
     }
@@ -102,9 +110,14 @@ def ensure_memory(project: Path) -> dict[str, str]:
     if not paths["notes_file"].exists():
         paths["notes_file"].write_text(NOTES_TEMPLATE, encoding="utf-8")
         notes_action = "created"
+    omissions_action = "exists"
+    if not paths["omissions_file"].exists():
+        paths["omissions_file"].write_text(OMISSIONS_TEMPLATE, encoding="utf-8")
+        omissions_action = "created"
     return {
         "gitignore_action": gitignore_action,
         "notes_action": notes_action,
+        "omissions_action": omissions_action,
     }
 
 
@@ -175,6 +188,14 @@ def remove_agents_block(agents_file: Path) -> str:
     return "removed"
 
 
+def check_agents_block(agents_file: Path) -> None:
+    if not agents_file.exists():
+        return
+    status = managed_block_status(agents_file.read_text(encoding="utf-8"))
+    if status == "corrupt":
+        emit({"ok": False, "error": "managed_block_corrupt", "agents_file": str(agents_file)}, 2)
+
+
 def base_payload(project: Path) -> dict[str, Any]:
     paths = learning_paths(project)
     return {
@@ -182,6 +203,7 @@ def base_payload(project: Path) -> dict[str, Any]:
         "learning_dir": str(paths["learning_dir"]),
         "state_file": str(paths["state_file"]),
         "notes_file": str(paths["notes_file"]),
+        "omissions_file": str(paths["omissions_file"]),
         "agents_file": str(paths["agents_file"]),
     }
 
@@ -202,10 +224,11 @@ def cmd_ensure(project: Path) -> None:
 
 
 def cmd_toggle(project: Path) -> None:
-    actions = ensure_memory(project)
     paths = learning_paths(project)
     current = read_enabled(paths["state_file"])
     enabled = 1 if current is None else 0 if current == 1 else 1
+    check_agents_block(paths["agents_file"])
+    actions = ensure_memory(project)
     agents_action = upsert_agents_block(paths["agents_file"]) if enabled else remove_agents_block(paths["agents_file"])
     write_enabled(paths["state_file"], enabled)
     payload = base_payload(project)

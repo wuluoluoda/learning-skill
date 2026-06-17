@@ -11,7 +11,7 @@ description: Explicit-use project learning mode for lightweight supplemental tea
 
 First identify why this skill was loaded:
 
-- **Explicit user invocation**: the user directly named `learning` through `/learning`, `$learning`, or a skill chip. Read [references/toggle.md](references/toggle.md), toggle the project state, confirm the new state briefly, then stop.
+- **Explicit user invocation**: the user directly named `learning` through `/learning`, `$learning`, or a skill chip. Read [references/toggle.md](references/toggle.md), toggle the project state, and confirm the new state briefly. If the resulting state is `enabled: 1`, load [references/active-mode.md](references/active-mode.md) and `<project>/.codex/learning/NOTES.md`; whether the current reply includes supplemental teaching is decided by the active-mode stage-boundary rules.
 - **Project AGENTS read-only recovery**: a `learning-managed` block in the project's `AGENTS.md` instructed Codex to read this skill. Run `scripts/learning_state.py status --project <project>`. If `enabled` is not `1`, stop. If `enabled` is `1`, read [references/active-mode.md](references/active-mode.md), then read `<project>/.codex/learning/NOTES.md`.
 
 Reading this skill from project `AGENTS.md` is not an explicit invocation and must not create, toggle, or change learning state.

@@ -35,3 +35,16 @@ python3 <skill-dir>/scripts/learning_state.py ensure --project <project>
 ```md
 - 默认简短说明关键判断依据；只有用户追问时再展开完整推理过程。
 ```
+
+## 更新 OMISSIONS.md
+
+当某条反馈可能值得以后整理进 `NOTES.md`，但现在不够明确、不够稳定或不是教学偏好时，先运行 `ensure`，再把它记录到 `<project>/.codex/learning/OMISSIONS.md`。
+
+记录格式保持轻量，包含开始时间和简要背景：
+
+```md
+- 开始时间：2026-06-17 01:40 +08:00
+  背景：用户觉得某次解释可能太抽象，但还没有形成可复用教学偏好。
+```
+
+`OMISSIONS.md` 只是审计线索，不是正式偏好；执行学习模式时不要把它当作 `NOTES.md` 应用。
