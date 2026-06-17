@@ -36,15 +36,41 @@ python3 <skill-dir>/scripts/learning_state.py ensure --project <project>
 - 默认简短说明关键判断依据；只有用户追问时再展开完整推理过程。
 ```
 
+写入 `NOTES.md` 后，运行：
+
+```bash
+python3 <skill-dir>/scripts/learning_state.py bump --project <project> --counter applied
+```
+
+这会更新 `OMISSIONS.md` 顶部 JSON 统计中的 `total` 和 `applied`，表示一次偏好修改尝试已实际应用。
+
 ## 更新 OMISSIONS.md
 
 当某条反馈可能值得以后整理进 `NOTES.md`，但现在不够明确、不够稳定或不是教学偏好时，先运行 `ensure`，再把它记录到 `<project>/.codex/learning/OMISSIONS.md`。
+
+`OMISSIONS.md` 顶部有一段 JSON 统计：
+
+```json
+{
+  "total": 0,
+  "applied": 0,
+  "omissions": 0
+}
+```
+
+其中 `total` 是偏好修改尝试总数，`applied` 是实际写入 `NOTES.md` 的次数，`omissions` 是录入 `OMISSIONS.md` 的次数。
 
 记录格式保持轻量，包含开始时间和简要背景：
 
 ```md
 - 开始时间：2026-06-17 01:40 +08:00
   背景：用户觉得某次解释可能太抽象，但还没有形成可复用教学偏好。
+```
+
+记录候选项后，运行：
+
+```bash
+python3 <skill-dir>/scripts/learning_state.py bump --project <project> --counter omissions
 ```
 
 `OMISSIONS.md` 只是审计线索，不是正式偏好；执行学习模式时不要把它当作 `NOTES.md` 应用。

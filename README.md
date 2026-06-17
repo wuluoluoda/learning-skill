@@ -59,6 +59,20 @@
 
 `.codex/learning/OMISSIONS.md` 记录那些可能值得写入 `NOTES.md`、但暂时不够明确、不够稳定或不是教学偏好的候选项。它需要包含开始时间和简要背景，只作为审计线索，不是正式偏好。
 
+`OMISSIONS.md` 顶部有一段 JSON 统计，用来审计偏好修改尝试：
+
+```json
+{
+  "total": 0,
+  "applied": 0,
+  "omissions": 0
+}
+```
+
+- `total`：偏好修改尝试总数。
+- `applied`：实际写入 `NOTES.md` 的次数。
+- `omissions`：录入 `OMISSIONS.md` 的次数。
+
 `.codex/learning/` 是个人化项目记忆。脚本会在 Git 仓库中幂等维护 `.gitignore`，只忽略 `.codex/learning/`，不忽略整个 `.codex/`。
 
 ## 目录结构
@@ -99,6 +113,8 @@ learning/
 **NOTES 职责**：`NOTES.md` 只记录“以后怎么教我”的稳定偏好，不能变成状态文件、命令配置或制度规则。
 
 **遗漏记录**：`OMISSIONS.md` 记录“可能值得写入 NOTES.md，但因不够明确、不够稳定或不是教学偏好而未写入”的候选项。它只提供审计线索，不是正式教学偏好。
+
+**偏好尝试计数**：`OMISSIONS.md` 顶部的 JSON 统计，记录偏好修改尝试总数、实际应用次数和录入遗漏记录次数。
 
 ### 架构决策
 

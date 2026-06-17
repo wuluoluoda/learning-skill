@@ -27,6 +27,6 @@ Reading this skill from project `AGENTS.md` is not an explicit invocation and mu
 
 ## Resources
 
-- `scripts/learning_state.py`: manage project state, project memory, `.gitignore`, and the project `AGENTS.md` managed block.
+- `scripts/learning_state.py`: manage project state, project memory, `OMISSIONS.md` counters, `.gitignore`, and the project `AGENTS.md` managed block.
 - [references/toggle.md](references/toggle.md): explicit invocation workflow.
 - [references/active-mode.md](references/active-mode.md): behavior while learning mode is enabled.

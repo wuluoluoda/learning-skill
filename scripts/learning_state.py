@@ -29,6 +29,14 @@ NOTES_TEMPLATE = """# Learning Notes
 
 OMISSIONS_TEMPLATE = """# Learning Omissions
 
+```json
+{
+  "total": 0,
+  "applied": 0,
+  "omissions": 0
+}
+```
+
 这些条目是可能值得写入 NOTES.md、但暂时不够明确、不够稳定或不是教学偏好的候选项。它们只是审计线索，不是正式教学偏好。
 
 ## 候选项
@@ -114,11 +122,71 @@ def ensure_memory(project: Path) -> dict[str, str]:
     if not paths["omissions_file"].exists():
         paths["omissions_file"].write_text(OMISSIONS_TEMPLATE, encoding="utf-8")
         omissions_action = "created"
+    else:
+        omissions_action = ensure_omissions_stats(paths["omissions_file"])
     return {
         "gitignore_action": gitignore_action,
         "notes_action": notes_action,
         "omissions_action": omissions_action,
     }
+
+
+def ensure_omissions_stats(omissions_file: Path) -> str:
+    text = omissions_file.read_text(encoding="utf-8")
+    if extract_stats_block(text) is not None:
+        return "exists"
+
+    rest = text
+    if rest.startswith("# Learning Omissions"):
+        lines = rest.splitlines()
+        heading = lines[0]
+        remainder = "\n".join(lines[1:]).lstrip()
+        rest = heading + "\n\n" + stats_block({"total": 0, "applied": 0, "omissions": 0}) + "\n\n" + remainder
+    else:
+        rest = "# Learning Omissions\n\n" + stats_block({"total": 0, "applied": 0, "omissions": 0}) + "\n\n" + rest.lstrip()
+    omissions_file.write_text(rest.rstrip() + "\n", encoding="utf-8")
+    return "stats_added"
+
+
+def stats_block(stats: dict[str, int]) -> str:
+    return "```json\n" + json.dumps(stats, ensure_ascii=False, indent=2) + "\n```"
+
+
+def extract_stats_block(text: str) -> tuple[dict[str, int], int, int] | None:
+    marker = "```json\n"
+    start = text.find(marker)
+    if start == -1:
+        return None
+    json_start = start + len(marker)
+    end = text.find("\n```", json_start)
+    if end == -1:
+        return None
+    try:
+        raw = json.loads(text[json_start:end])
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    stats = {
+        "total": int(raw.get("total", 0)),
+        "applied": int(raw.get("applied", 0)),
+        "omissions": int(raw.get("omissions", 0)),
+    }
+    return stats, start, end + len("\n```")
+
+
+def bump_omissions_stats(omissions_file: Path, counter: str) -> dict[str, int]:
+    ensure_omissions_stats(omissions_file)
+    text = omissions_file.read_text(encoding="utf-8")
+    extracted = extract_stats_block(text)
+    if extracted is None:
+        emit({"ok": False, "error": "invalid_omissions_stats", "omissions_file": str(omissions_file)}, 2)
+    stats, start, end = extracted
+    stats["total"] += 1
+    stats[counter] += 1
+    new_text = text[:start] + stats_block(stats) + text[end:]
+    omissions_file.write_text(new_text.rstrip() + "\n", encoding="utf-8")
+    return stats
 
 
 def read_enabled(state_file: Path) -> int | None:
@@ -223,6 +291,17 @@ def cmd_ensure(project: Path) -> None:
     emit(payload)
 
 
+def cmd_bump(project: Path, counter: str | None) -> None:
+    if counter not in {"applied", "omissions"}:
+        emit({"ok": False, "error": "invalid_counter", "counter": counter}, 2)
+    actions = ensure_memory(project)
+    paths = learning_paths(project)
+    stats = bump_omissions_stats(paths["omissions_file"], counter)
+    payload = base_payload(project)
+    payload.update({"ok": True, "counter": counter, "stats": stats, **actions})
+    emit(payload)
+
+
 def cmd_toggle(project: Path) -> None:
     paths = learning_paths(project)
     current = read_enabled(paths["state_file"])
@@ -247,8 +326,9 @@ def cmd_toggle(project: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Manage learning skill project state.")
-    parser.add_argument("action", choices=["toggle", "ensure", "status"])
+    parser.add_argument("action", choices=["toggle", "ensure", "status", "bump"])
     parser.add_argument("--project", default=".", help="Project directory. Defaults to the current directory.")
+    parser.add_argument("--counter", choices=["applied", "omissions"], help="Counter to increment for bump.")
     args = parser.parse_args()
 
     project = resolve_project(args.project)
@@ -258,6 +338,8 @@ def main() -> None:
         cmd_ensure(project)
     if args.action == "status":
         cmd_status(project)
+    if args.action == "bump":
+        cmd_bump(project, args.counter)
 
 
 if __name__ == "__main__":
